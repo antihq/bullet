@@ -62,4 +62,9 @@ class User extends Authenticatable
             ->map(fn ($word) => Str::substr($word, 0, 1))
             ->implode('');
     }
+
+    public function notes()
+    {
+        return $this->hasMany(Note::class)->orderBy('position');
+    }
 }
