@@ -20,7 +20,22 @@ class NoteFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
+            'board_id' => null,
             'position' => fake()->numberBetween(0, 100),
         ];
+    }
+
+    public function withBoard(int $boardId): self
+    {
+        return $this->state(fn (array $attributes) => [
+            'board_id' => $boardId,
+        ]);
+    }
+
+    public function unassigned(): self
+    {
+        return $this->state(fn (array $attributes) => [
+            'board_id' => null,
+        ]);
     }
 }

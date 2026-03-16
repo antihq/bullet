@@ -2,20 +2,19 @@
 
 namespace App\Models;
 
-use Database\Factories\NoteFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Note extends Model
+class Board extends Model
 {
-    /** @use HasFactory<NoteFactory> */
     use HasFactory;
 
     protected $fillable = [
         'user_id',
-        'board_id',
+        'name',
+        'description',
         'position',
     ];
 
@@ -24,13 +23,8 @@ class Note extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function board(): BelongsTo
+    public function notes(): HasMany
     {
-        return $this->belongsTo(Board::class);
-    }
-
-    public function tasks(): HasMany
-    {
-        return $this->hasMany(Task::class)->orderBy('position');
+        return $this->hasMany(Note::class)->orderBy('position');
     }
 }

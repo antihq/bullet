@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Board;
 use App\Models\Note;
 use App\Models\Task;
 use App\Models\User;
@@ -136,4 +137,29 @@ test('users cannot add task to another users note', function () {
         ->call('createTask', $note->id);
 
     expect(Task::count())->toBe(0);
+});
+
+test('dashboard only shows unassigned notes', function () {
+    $user = User::factory()->create();
+    $board = Board::factory()->for($user)->create();
+
+    Note::factory()->for($user)->withBoard($board->id)->create();
+    Note::factory()->for($user)->withBoard($board->id)->create();
+    Note::factory()->for($user)->unassigned()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard')
+        ->assertCount('notes', 1);
+});
+
+test('users can move notes to a board', function () {
+    $user = User::factory()->create();
+    $board = Board::factory()->for($user)->create();
+    $note = Note::factory()->for($user)->unassigned()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard')
+        ->call('moveNoteToBoard', $note->id, $board->id);
+
+    expect($note->fresh()->board_id)->toBe($board->id);
 });

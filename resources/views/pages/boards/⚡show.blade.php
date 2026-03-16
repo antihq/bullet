@@ -8,6 +8,8 @@ use Livewire\Component;
 
 new class extends Component
 {
+    public Board $board;
+
     public Collection $notes;
 
     public int $activeNoteId = 0;
@@ -16,14 +18,18 @@ new class extends Component
 
     public string $newNoteTaskContent = '';
 
-    public function mount(): void
+    public function mount(Board $board): void
     {
+        if ($board->user_id !== auth()->id()) {
+            abort(403);
+        }
+        $this->board = $board;
         $this->loadNotes();
     }
 
     public function loadNotes(): void
     {
-        $this->notes = auth()->user()->notes()->whereNull('board_id')->with('tasks')->get();
+        $this->notes = $this->board->notes()->with('tasks')->get();
     }
 
     public function createNoteWithTask(): void
@@ -34,6 +40,7 @@ new class extends Component
 
         $note = Note::create([
             'user_id' => auth()->id(),
+            'board_id' => $this->board->id,
             'position' => $this->notes->count(),
         ]);
 
@@ -64,12 +71,15 @@ new class extends Component
             abort(403);
         }
 
-        $board = Board::findOrFail($boardId);
-        if ($board->user_id !== auth()->id()) {
-            abort(403);
+        if ($boardId === 0) {
+            $note->update(['board_id' => null]);
+        } else {
+            $board = Board::findOrFail($boardId);
+            if ($board->user_id !== auth()->id()) {
+                abort(403);
+            }
+            $note->update(['board_id' => $boardId]);
         }
-
-        $note->update(['board_id' => $boardId]);
         $this->loadNotes();
     }
 
@@ -117,10 +127,15 @@ new class extends Component
 
 <div class="p-6">
     <flux:header>
-        <flux:heading size="xl">Dashboard</flux:heading>
-        <flux:link href="{{ route('boards.index') }}">
-            <flux:button>Boards</flux:button>
-        </flux:link>
+        <div>
+            <flux:link href="{{ route('boards.index') }}">
+                <flux:button variant="subtle" icon="arrow-left">Boards</flux:button>
+            </flux:link>
+            <flux:heading size="xl" class="mt-2">{{ $board->name }}</flux:heading>
+            @if ($board->description)
+                <flux:text class="text-zinc-500 mt-1">{{ $board->description }}</flux:text>
+            @endif
+        </div>
     </flux:header>
 
     <flux:kanban class="mt-6">
@@ -131,8 +146,11 @@ new class extends Component
                         <flux:dropdown>
                             <flux:button variant="subtle" icon="ellipsis-horizontal" size="sm" />
                             <flux:menu>
-                                @foreach (auth()->user()->boards as $board)
-                                    <flux:menu.item wire:click="moveNoteToBoard({{ $note->id }}, {{ $board->id }})">{{ $board->name }}</flux:menu.item>
+                                <flux:menu.item wire:click="moveNoteToBoard({{ $note->id }}, 0)">Unassigned</flux:menu.item>
+                                @foreach (auth()->user()->boards as $otherBoard)
+                                    @if ($otherBoard->id !== $board->id)
+                                        <flux:menu.item wire:click="moveNoteToBoard({{ $note->id }}, {{ $otherBoard->id }})">{{ $otherBoard->name }}</flux:menu.item>
+                                    @endif
                                 @endforeach
                                 <flux:menu.item icon="trash" wire:click="deleteNote({{ $note->id }})">Delete note</flux:menu.item>
                             </flux:menu>
