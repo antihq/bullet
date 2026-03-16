@@ -163,3 +163,45 @@ test('users can move notes to a board', function () {
 
     expect($note->fresh()->board_id)->toBe($board->id);
 });
+
+test('users can delete their own board', function () {
+    $user = User::factory()->create();
+    $board = Board::factory()->for($user)->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard')
+        ->call('deleteBoard', $board->id);
+
+    expect(Board::count())->toBe(0);
+});
+
+test('users cannot delete another users board', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $board = Board::factory()->for($otherUser)->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard')
+        ->call('deleteBoard', $board->id);
+
+    expect(Board::count())->toBe(1);
+});
+
+test('dashboard shows user boards', function () {
+    $user = User::factory()->create();
+    Board::factory()->for($user)->create(['name' => 'Work']);
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard')
+        ->assertCount('boards', 1)
+        ->assertSee('Work');
+});
+
+test('dashboard shows empty state when no boards', function () {
+    $user = User::factory()->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::dashboard')
+        ->assertCount('boards', 0)
+        ->assertSee('No boards yet');
+});
