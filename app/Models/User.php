@@ -67,9 +67,4 @@ class User extends Authenticatable
     {
         return $this->hasMany(Note::class)->orderBy('position');
     }
-
-    public function boards()
-    {
-        return $this->hasMany(Board::class)->orderBy('position');
-    }
 }

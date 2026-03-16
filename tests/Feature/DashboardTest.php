@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Board;
 use App\Models\Note;
 use App\Models\Task;
 use App\Models\User;
@@ -139,69 +138,65 @@ test('users cannot add task to another users note', function () {
     expect(Task::count())->toBe(0);
 });
 
-test('dashboard only shows unassigned notes', function () {
+test('dashboard shows empty state when no notes', function () {
     $user = User::factory()->create();
-    $board = Board::factory()->for($user)->create();
-
-    Note::factory()->for($user)->withBoard($board->id)->create();
-    Note::factory()->for($user)->withBoard($board->id)->create();
-    Note::factory()->for($user)->unassigned()->create();
 
     Livewire::actingAs($user)
         ->test('pages::dashboard')
-        ->assertCount('notes', 1);
+        ->assertOk()
+        ->assertCount('notes', 0);
 });
 
-test('users can move notes to a board', function () {
+test('note with task requires content', function () {
     $user = User::factory()->create();
-    $board = Board::factory()->for($user)->create();
-    $note = Note::factory()->for($user)->unassigned()->create();
 
     Livewire::actingAs($user)
         ->test('pages::dashboard')
-        ->call('moveNoteToBoard', $note->id, $board->id);
+        ->set('newNoteTaskContent', '')
+        ->call('createNoteWithTask')
+        ->assertHasErrors(['newNoteTaskContent' => 'required']);
 
-    expect($note->fresh()->board_id)->toBe($board->id);
+    expect(Note::count())->toBe(0)
+        ->and(Task::count())->toBe(0);
 });
 
-test('users can delete their own board', function () {
+test('note with task content cannot exceed 255 characters', function () {
     $user = User::factory()->create();
-    $board = Board::factory()->for($user)->create();
 
     Livewire::actingAs($user)
         ->test('pages::dashboard')
-        ->call('deleteBoard', $board->id);
+        ->set('newNoteTaskContent', str_repeat('a', 256))
+        ->call('createNoteWithTask')
+        ->assertHasErrors(['newNoteTaskContent' => 'max']);
 
-    expect(Board::count())->toBe(0);
+    expect(Note::count())->toBe(0)
+        ->and(Task::count())->toBe(0);
 });
 
-test('users cannot delete another users board', function () {
+test('task requires content', function () {
     $user = User::factory()->create();
-    $otherUser = User::factory()->create();
-    $board = Board::factory()->for($otherUser)->create();
+    $note = Note::factory()->for($user)->create();
 
     Livewire::actingAs($user)
         ->test('pages::dashboard')
-        ->call('deleteBoard', $board->id);
+        ->set('activeNoteId', $note->id)
+        ->set('newTaskContent', '')
+        ->call('createTask', $note->id)
+        ->assertHasErrors(['newTaskContent' => 'required']);
 
-    expect(Board::count())->toBe(1);
+    expect(Task::count())->toBe(0);
 });
 
-test('dashboard shows user boards', function () {
+test('task content cannot exceed 255 characters', function () {
     $user = User::factory()->create();
-    Board::factory()->for($user)->create(['name' => 'Work']);
+    $note = Note::factory()->for($user)->create();
 
     Livewire::actingAs($user)
         ->test('pages::dashboard')
-        ->assertCount('boards', 1)
-        ->assertSee('Work');
-});
+        ->set('activeNoteId', $note->id)
+        ->set('newTaskContent', str_repeat('a', 256))
+        ->call('createTask', $note->id)
+        ->assertHasErrors(['newTaskContent' => 'max']);
 
-test('dashboard shows empty state when no boards', function () {
-    $user = User::factory()->create();
-
-    Livewire::actingAs($user)
-        ->test('pages::dashboard')
-        ->assertCount('boards', 0)
-        ->assertSee('No boards yet');
+    expect(Task::count())->toBe(0);
 });
