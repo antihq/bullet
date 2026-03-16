@@ -105,7 +105,12 @@ new class extends Component
         <div class="mt-8">
             <div class="flex items-center justify-between">
                 <flux:heading>Note #{{ $loop->iteration }}</flux:heading>
-                <flux:button variant="subtle" icon="trash" icon:variant="micro" size="sm" wire:click="deleteNote({{ $note->id }})" />
+                <flux:dropdown>
+                    <flux:button variant="subtle" icon="ellipsis-horizontal" icon:variant="micro" size="sm" />
+                    <flux:menu>
+                        <flux:menu.item icon="trash" variant="danger" wire:click="deleteNote({{ $note->id }})">Delete</flux:menu.item>
+                    </flux:menu>
+                </flux:dropdown>
             </div>
 
             <flux:table class="mt-2">
@@ -117,7 +122,12 @@ new class extends Component
                                 <span class="{{ $task->is_completed ? 'line-through' : '' }} flex-1">{{ $task->content }}</span>
                             </flux:table.cell>
                             <flux:table.cell align="end">
-                                <flux:button variant="subtle" icon="trash" icon:variant="micro" size="sm" wire:click="deleteTask({{ $task->id }})" inset="top bottom" />
+                                <flux:dropdown>
+                                    <flux:button variant="subtle" icon="ellipsis-horizontal" icon:variant="micro" size="sm" inset="top bottom" />
+                                    <flux:menu>
+                                        <flux:menu.item icon="trash" variant="danger" wire:click="deleteTask({{ $task->id }})">Delete</flux:menu.item>
+                                    </flux:menu>
+                                </flux:dropdown>
                             </flux:table.cell>
                         </flux:table.row>
                     @endforeach
