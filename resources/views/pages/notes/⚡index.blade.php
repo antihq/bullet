@@ -68,11 +68,22 @@ new class extends Component
     @foreach ($notes as $note)
         <div class="mt-6">
             <div class="flex items-center justify-between">
-                <flux:heading>
+                <flux:heading x-data="{ 
+    date: new Date('{{ $note->created_at->toIso8601String() }}'),
+    format(type) {
+        if (type === 'time') {
+            return this.date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        }
+        const options = this.date.getFullYear() === new Date().getFullYear()
+            ? { month: 'long', day: 'numeric' }
+            : { month: 'long', day: 'numeric', year: 'numeric' };
+        return this.date.toLocaleDateString([], options);
+    }
+}">
                     @if ($this->shouldShowTime($note))
-                        {{ $note->created_at->format('g:i A') }}
+                        <span x-text="format('time')"></span>
                     @else
-                        {{ $note->created_at->isCurrentYear() ? $note->created_at->format('F j') : $note->created_at->format('F j, Y') }}
+                        <span x-text="format('date')"></span>
                     @endif
                 </flux:heading>
                 <flux:dropdown>
