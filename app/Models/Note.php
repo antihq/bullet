@@ -15,7 +15,6 @@ class Note extends Model
 
     protected $fillable = [
         'user_id',
-        'position',
     ];
 
     public function user(): BelongsTo
@@ -25,6 +24,6 @@ class Note extends Model
 
     public function tasks(): HasMany
     {
-        return $this->hasMany(Task::class)->orderBy('position');
+        return $this->hasMany(Task::class);
     }
 }

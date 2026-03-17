@@ -33,7 +33,6 @@ new class extends Component
 
         $note = Note::create([
             'user_id' => auth()->id(),
-            'position' => $this->notes->count(),
         ]);
 
         Task::create([
@@ -101,8 +100,27 @@ new class extends Component
 <div>
     <flux:heading size="xl">Dashboard</flux:heading>
 
+    <div class="mt-8">
+        <flux:heading>New Note</flux:heading>
+        <flux:table>
+            <flux:table.rows>
+                <flux:table.row>
+                    <flux:table.cell>
+                        <form wire:submit="createNoteWithTask">
+                            <flux:composer wire:model="newNoteTaskContent" submit="enter" rows="1" inline label="Task" label:sr-only placeholder="Add a task to create a new note...">
+                                <x-slot name="actionsTrailing">
+                                    <flux:button type="submit" size="sm" variant="subtle" icon="plus" />
+                                </x-slot>
+                            </flux:composer>
+                        </form>
+                    </flux:table.cell>
+                </flux:table.row>
+            </flux:table.rows>
+        </flux:table>
+    </div>
+
     @foreach ($notes as $note)
-        <div class="mt-8">
+        <div class="mt-6">
             <div class="flex items-center justify-between">
                 <flux:heading>Note #{{ $loop->iteration }}</flux:heading>
                 <flux:dropdown>
@@ -146,23 +164,4 @@ new class extends Component
             </flux:table>
         </div>
     @endforeach
-
-    <div class="mt-6">
-        <flux:heading>New Note</flux:heading>
-        <flux:table>
-            <flux:table.rows>
-                <flux:table.row>
-                    <flux:table.cell>
-                        <form wire:submit="createNoteWithTask">
-                            <flux:composer wire:model="newNoteTaskContent" submit="enter" rows="1" inline label="Task" label:sr-only placeholder="Add a task to create a new note...">
-                                <x-slot name="actionsTrailing">
-                                    <flux:button type="submit" size="sm" variant="subtle" icon="plus" />
-                                </x-slot>
-                            </flux:composer>
-                        </form>
-                    </flux:table.cell>
-                </flux:table.row>
-            </flux:table.rows>
-        </flux:table>
-    </div>
 </div>

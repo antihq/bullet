@@ -65,6 +65,6 @@ class User extends Authenticatable
 
     public function notes()
     {
-        return $this->hasMany(Note::class)->orderBy('position');
+        return $this->hasMany(Note::class)->orderBy('created_at', 'desc');
     }
 }

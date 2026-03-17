@@ -20,7 +20,6 @@ class NoteFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'position' => fake()->numberBetween(0, 100),
         ];
     }
 }
