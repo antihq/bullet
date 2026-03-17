@@ -166,3 +166,25 @@ test('passwordless user can access security page without confirmation', function
         ->assertSee('Set password')
         ->assertDontSee('Update password');
 });
+
+test('2FA section shows message for passwordless users', function () {
+    $user = User::factory()->withoutPassword()->create();
+
+    $this->actingAs($user)
+        ->withSession(['auth.password_confirmed_at' => time()])
+        ->get(route('security.edit'))
+        ->assertOk()
+        ->assertSee('Set a password to enable two-factor authentication')
+        ->assertSee('When you enable two-factor authentication');
+});
+
+test('enable 2FA button is disabled for passwordless users', function () {
+    $user = User::factory()->withoutPassword()->create();
+
+    $this->actingAs($user)
+        ->withSession(['auth.password_confirmed_at' => time()])
+        ->get(route('security.edit'))
+        ->assertOk()
+        ->assertSee('Enable 2FA')
+        ->assertSee('disabled'); // Button should have disabled attribute
+});

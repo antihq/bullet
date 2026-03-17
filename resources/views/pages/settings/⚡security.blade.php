@@ -169,6 +169,12 @@ new #[Title('Security settings')] class extends Component
                         </div>
                     @else
                         <div class="space-y-4">
+                            @if (! $hasPassword)
+                                <flux:text variant="subtle">
+                                    {{ __('Set a password to enable two-factor authentication.') }}
+                                </flux:text>
+                            @endif
+
                             <flux:text variant="subtle">
                                 {{ __('When you enable two-factor authentication, you will be prompted for a secure pin during login. This pin can be retrieved from a TOTP-supported application on your phone.') }}
                             </flux:text>
@@ -176,6 +182,7 @@ new #[Title('Security settings')] class extends Component
                             <flux:modal.trigger name="two-factor-setup-modal">
                                 <flux:button
                                     variant="primary"
+                                    :disabled="! $hasPassword"
                                     wire:click="$dispatch('start-two-factor-setup')"
                                 >
                                     {{ __('Enable 2FA') }}
