@@ -83,7 +83,7 @@ new class extends Component
                 </flux:dropdown>
             </div>
 
-            <livewire:note :note="$note" class="mt-2" />
+            <livewire:note :note="$note" :key="$note->id" class="mt-2" />
         </div>
     @endforeach
 </div>
