@@ -16,7 +16,7 @@
             </flux:sidebar.header>
 
             <flux:sidebar.nav>
-                <flux:sidebar.item icon="server" :href="route('notes.index')" :current="request()->routeIs('notes.*')" wire:navigate>
+                <flux:sidebar.item icon="document-text" :href="route('notes.index')" :current="request()->routeIs('notes.*')" wire:navigate>
                     {{ __('Notes') }}
                 </flux:sidebar.item>
             </flux:sidebar.nav>
