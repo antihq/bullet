@@ -11,6 +11,8 @@ new class extends Component
 
     public string $newTaskContent = '';
 
+    public array $notesByDate = [];
+
     public function mount(): void
     {
         $this->loadNotes();
@@ -19,6 +21,18 @@ new class extends Component
     public function loadNotes(): void
     {
         $this->notes = auth()->user()->notes()->with('tasks')->get();
+
+        $this->notesByDate = $this->notes
+            ->groupBy(fn ($note) => $note->created_at->format('Y-m-d'))
+            ->map(fn ($notes) => $notes->first()->id)
+            ->toArray();
+    }
+
+    public function shouldShowTime(Note $note): bool
+    {
+        $dateKey = $note->created_at->format('Y-m-d');
+
+        return isset($this->notesByDate[$dateKey]) && $this->notesByDate[$dateKey] !== $note->id;
     }
 
     public function createNote(): void
@@ -90,7 +104,13 @@ new class extends Component
     @foreach ($notes as $note)
         <div class="mt-6">
             <div class="flex items-center justify-between">
-                <flux:heading>{{ $note->created_at->isCurrentYear() ? $note->created_at->format('F j') : $note->created_at->format('F j, Y') }}</flux:heading>
+                <flux:heading>
+                    @if ($this->shouldShowTime($note))
+                        {{ $note->created_at->format('g:i A') }}
+                    @else
+                        {{ $note->created_at->isCurrentYear() ? $note->created_at->format('F j') : $note->created_at->format('F j, Y') }}
+                    @endif
+                </flux:heading>
                 <flux:dropdown>
                     <flux:button variant="subtle" icon="ellipsis-horizontal" icon:variant="micro" size="sm" />
                     <flux:menu>

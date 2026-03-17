@@ -175,3 +175,71 @@ test('task content cannot exceed 255 characters', function () {
 
     expect(Task::count())->toBe(0);
 });
+
+test('first note on a date shows date, not time', function () {
+    $user = User::factory()->create();
+    $note = Note::factory()->for($user)->create(['created_at' => now()]);
+
+    Livewire::actingAs($user)
+        ->test('pages::notes.index')
+        ->assertSee($note->created_at->format('F j'))
+        ->assertDontSee($note->created_at->format('g:i A'));
+});
+
+test('subsequent notes on same date show time', function () {
+    $user = User::factory()->create();
+    $date = now()->startOfDay();
+
+    Note::factory()->for($user)->create(['created_at' => $date->copy()->addHours(10)]);
+    Note::factory()->for($user)->create(['created_at' => $date->copy()->addHours(18)]);
+
+    $response = Livewire::actingAs($user)
+        ->test('pages::notes.index');
+
+    $html = $response->html();
+
+    expect($html)->toContain($date->format('F j'))
+        ->and($html)->toMatch('/AM|PM/');
+});
+
+test('notes on different dates each show date', function () {
+    $user = User::factory()->create();
+
+    $note1 = Note::factory()->for($user)->create(['created_at' => now()->subDay()]);
+    $note2 = Note::factory()->for($user)->create(['created_at' => now()]);
+
+    Livewire::actingAs($user)
+        ->test('pages::notes.index')
+        ->assertSee($note1->created_at->format('F j'))
+        ->assertSee($note2->created_at->format('F j'))
+        ->assertDontSee($note1->created_at->format('g:i A'))
+        ->assertDontSee($note2->created_at->format('g:i A'));
+});
+
+test('notes from previous year show year in date', function () {
+    $user = User::factory()->create();
+    $lastYear = now()->subYear()->year;
+
+    $note = Note::factory()->for($user)->create(['created_at' => now()->subYear()]);
+
+    Livewire::actingAs($user)
+        ->test('pages::notes.index')
+        ->assertSee((string) $lastYear);
+});
+
+test('multiple notes from previous year show time for subsequent', function () {
+    $user = User::factory()->create();
+    $lastYear = now()->subYear()->year;
+    $date = now()->subYear()->startOfDay();
+
+    Note::factory()->for($user)->create(['created_at' => $date->copy()->addHours(10)]);
+    Note::factory()->for($user)->create(['created_at' => $date->copy()->addHours(18)]);
+
+    $response = Livewire::actingAs($user)
+        ->test('pages::notes.index');
+
+    $html = $response->html();
+
+    expect($html)->toContain((string) $lastYear)
+        ->and($html)->toMatch('/AM|PM/');
+});
