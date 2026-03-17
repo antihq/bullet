@@ -90,7 +90,7 @@ new class extends Component
     @foreach ($notes as $note)
         <div class="mt-6">
             <div class="flex items-center justify-between">
-                <flux:heading>Note #{{ $loop->iteration }}</flux:heading>
+                <flux:heading>{{ $note->created_at->isCurrentYear() ? $note->created_at->format('F j') : $note->created_at->format('F j, Y') }}</flux:heading>
                 <flux:dropdown>
                     <flux:button variant="subtle" icon="ellipsis-horizontal" icon:variant="micro" size="sm" />
                     <flux:menu>
