@@ -2,6 +2,7 @@
 
 use App\Models\User;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Laravel\Fortify\Features;
 
@@ -59,6 +60,36 @@ test('password can be reset with valid token', function () {
         $response
             ->assertSessionHasNoErrors()
             ->assertRedirect(route('login', absolute: false));
+
+        return true;
+    });
+});
+
+test('passwordless user can set first password via reset flow', function () {
+    Notification::fake();
+
+    $user = User::factory()->withoutPassword()->create();
+
+    // Request password reset
+    $this->post(route('password.request'), ['email' => $user->email]);
+
+    // Get token from notification
+    Notification::assertSentTo($user, ResetPassword::class, function ($notification) use ($user) {
+        $token = $notification->token;
+
+        // Reset password
+        $response = $this->post(route('password.update'), [
+            'token' => $token,
+            'email' => $user->email,
+            'password' => 'new-password',
+            'password_confirmation' => 'new-password',
+        ]);
+
+        $response->assertSessionHasNoErrors()
+            ->assertRedirect(route('login', absolute: false));
+
+        // Verify password was set
+        expect(Hash::check('new-password', $user->refresh()->password))->toBeTrue();
 
         return true;
     });

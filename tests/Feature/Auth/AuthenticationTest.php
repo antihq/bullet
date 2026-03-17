@@ -56,6 +56,30 @@ test('users with two factor enabled are redirected to two factor challenge', fun
     $this->assertGuest();
 });
 
+test('passwordless user cannot authenticate with any password', function () {
+    $user = User::factory()->withoutPassword()->create();
+
+    $response = $this->post(route('login.store'), [
+        'email' => $user->email,
+        'password' => 'any-password',
+    ]);
+
+    $response->assertSessionHasErrorsIn('email');
+    $this->assertGuest();
+});
+
+test('passwordless user cannot authenticate with empty password', function () {
+    $user = User::factory()->withoutPassword()->create();
+
+    $response = $this->post(route('login.store'), [
+        'email' => $user->email,
+        'password' => '',
+    ]);
+
+    $response->assertSessionHasErrors('password');
+    $this->assertGuest();
+});
+
 test('users can logout', function () {
     $user = User::factory()->create();
 
