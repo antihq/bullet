@@ -57,8 +57,8 @@ new class extends Component
         <flux:table.rows>
             @foreach ($note->tasks as $task)
                 <flux:table.row :key="$task->id">
-                    <flux:table.cell class="flex items-start gap-3">
-                        <flux:checkbox wire:model.live="task.is_completed" wire:change="toggleTask({{ $task->id }})" />
+                    <flux:table.cell class="flex items-start gap-3" :variant="$task->is_completed ? 'default' : 'strong'">
+                        <flux:checkbox :checked="$task->is_completed" wire:change="toggleTask({{ $task->id }})" />
                         <span class="{{ $task->is_completed ? 'line-through' : '' }} flex-1">{{ $task->content }}</span>
                     </flux:table.cell>
                     <flux:table.cell align="end">
