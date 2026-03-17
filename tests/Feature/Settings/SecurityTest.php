@@ -155,3 +155,14 @@ test('heading shows update password for users with password', function () {
         ->assertSee('Update password')
         ->assertDontSee('Set password');
 });
+
+test('passwordless user can access security page without confirmation', function () {
+    $user = User::factory()->withoutPassword()->create();
+
+    $response = $this->actingAs($user)
+        ->get(route('security.edit'));
+
+    $response->assertOk()
+        ->assertSee('Set password')
+        ->assertDontSee('Update password');
+});
