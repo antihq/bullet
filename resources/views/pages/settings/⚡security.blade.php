@@ -10,11 +10,14 @@ use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new #[Title('Security settings')] class extends Component {
+new #[Title('Security settings')] class extends Component
+{
     use PasswordValidationRules;
 
     public string $current_password = '';
+
     public string $password = '';
+
     public string $password_confirmation = '';
 
     public bool $canManageTwoFactor;
@@ -23,12 +26,15 @@ new #[Title('Security settings')] class extends Component {
 
     public bool $requiresConfirmation;
 
+    public bool $hasPassword;
+
     /**
      * Mount the component.
      */
     public function mount(DisableTwoFactorAuthentication $disableTwoFactorAuthentication): void
     {
         $this->canManageTwoFactor = Features::canManageTwoFactorAuthentication();
+        $this->hasPassword = ! is_null(auth()->user()->password);
 
         if ($this->canManageTwoFactor) {
             if (Fortify::confirmsTwoFactorAuthentication() && is_null(auth()->user()->two_factor_confirmed_at)) {
@@ -46,10 +52,15 @@ new #[Title('Security settings')] class extends Component {
     public function updatePassword(): void
     {
         try {
-            $validated = $this->validate([
-                'current_password' => $this->currentPasswordRules(),
+            $rules = [
                 'password' => $this->passwordRules(),
-            ]);
+            ];
+
+            if ($this->hasPassword) {
+                $rules['current_password'] = $this->currentPasswordRules();
+            }
+
+            $validated = $this->validate($rules);
         } catch (ValidationException $e) {
             $this->reset('current_password', 'password', 'password_confirmation');
 
@@ -60,6 +71,7 @@ new #[Title('Security settings')] class extends Component {
             'password' => $validated['password'],
         ]);
 
+        $this->hasPassword = true;
         $this->reset('current_password', 'password', 'password_confirmation');
 
         $this->dispatch('password-updated');
@@ -90,16 +102,18 @@ new #[Title('Security settings')] class extends Component {
 
     <flux:heading class="sr-only">{{ __('Security settings') }}</flux:heading>
 
-    <x-pages::settings.layout :heading="__('Update password')" :subheading="__('Ensure your account is using a long, random password to stay secure')">
+    <x-pages::settings.layout :heading="$hasPassword ? __('Update password') : __('Set password')" :subheading="$hasPassword ? __('Ensure your account is using a long, random password to stay secure') : __('Add a password to your account to enable password-based login')">
         <form method="POST" wire:submit="updatePassword" class="mt-6 space-y-6">
-            <flux:input
-                wire:model="current_password"
-                :label="__('Current password')"
-                type="password"
-                required
-                autocomplete="current-password"
-                viewable
-            />
+            @if ($hasPassword)
+                <flux:input
+                    wire:model="current_password"
+                    :label="__('Current password')"
+                    type="password"
+                    required
+                    autocomplete="current-password"
+                    viewable
+                />
+            @endif
             <flux:input
                 wire:model="password"
                 :label="__('New password')"

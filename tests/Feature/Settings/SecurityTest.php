@@ -102,3 +102,56 @@ test('correct password must be provided to update password', function () {
 
     $response->assertHasErrors(['current_password']);
 });
+
+test('passwordless user can set first password', function () {
+    $user = User::factory()->withoutPassword()->create();
+
+    $this->actingAs($user);
+
+    $response = Livewire::test('pages::settings.security')
+        ->set('password', 'new-password')
+        ->set('password_confirmation', 'new-password')
+        ->call('updatePassword');
+
+    $response->assertHasNoErrors();
+
+    expect(Hash::check('new-password', $user->refresh()->password))->toBeTrue();
+});
+
+test('current password not required for passwordless users', function () {
+    $user = User::factory()->withoutPassword()->create();
+
+    $this->actingAs($user);
+
+    $response = Livewire::test('pages::settings.security')
+        ->set('current_password', 'some-password')
+        ->set('password', 'new-password')
+        ->set('password_confirmation', 'new-password')
+        ->call('updatePassword');
+
+    $response->assertHasNoErrors();
+});
+
+test('heading shows set password for passwordless users', function () {
+    $user = User::factory()->withoutPassword()->create();
+
+    $this->actingAs($user)
+        ->withSession(['auth.password_confirmed_at' => time()])
+        ->get(route('security.edit'))
+        ->assertOk()
+        ->assertSee('Set password')
+        ->assertDontSee('Update password');
+});
+
+test('heading shows update password for users with password', function () {
+    $user = User::factory()->create([
+        'password' => Hash::make('password'),
+    ]);
+
+    $this->actingAs($user)
+        ->withSession(['auth.password_confirmed_at' => time()])
+        ->get(route('security.edit'))
+        ->assertOk()
+        ->assertSee('Update password')
+        ->assertDontSee('Set password');
+});
