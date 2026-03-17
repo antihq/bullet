@@ -77,7 +77,7 @@ new class extends Component
                         <flux:dropdown>
                             <flux:button variant="subtle" icon="ellipsis-horizontal" icon:variant="micro" size="sm" inset="top bottom" />
                             <flux:menu>
-                                <flux:menu.item wire:click="cancelTask({{ $task->id }})">{{ $task->is_cancelled ? 'Restore' : 'Cancel' }}</flux:menu.item>
+                                <flux:menu.item :icon="$task->is_cancelled ? 'arrow-path' : 'x-circle'" icon:variant="micro" wire:click="cancelTask({{ $task->id }})">{{ $task->is_cancelled ? 'Restore' : 'Cancel' }}</flux:menu.item>
                                 <flux:menu.item icon="trash" icon:variant="micro" variant="danger" wire:click="deleteTask({{ $task->id }})">Delete</flux:menu.item>
                             </flux:menu>
                         </flux:dropdown>
