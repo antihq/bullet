@@ -78,7 +78,7 @@ new class extends Component
                             <flux:button variant="subtle" icon="ellipsis-horizontal" icon:variant="micro" size="sm" inset="top bottom" />
                             <flux:menu>
                                 <flux:menu.item wire:click="cancelTask({{ $task->id }})">Cancel</flux:menu.item>
-                                <flux:menu.item icon="trash" variant="danger" wire:click="deleteTask({{ $task->id }})">Delete</flux:menu.item>
+                                <flux:menu.item icon="trash" icon:variant="micro" variant="danger" wire:click="deleteTask({{ $task->id }})">Delete</flux:menu.item>
                             </flux:menu>
                         </flux:dropdown>
                     </flux:table.cell>

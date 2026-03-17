@@ -59,7 +59,7 @@ new class extends Component
 }
 ?>
 
-<div>
+<div class="max-w-3xl mx-auto">
     <div class="flex items-center justify-between">
         <flux:heading size="xl">Notes</flux:heading>
         <flux:button wire:click="createNote" icon="plus">Add Note</flux:button>
@@ -89,7 +89,7 @@ new class extends Component
                 <flux:dropdown>
                     <flux:button variant="subtle" icon="ellipsis-horizontal" icon:variant="micro" size="sm" />
                     <flux:menu>
-                        <flux:menu.item icon="trash" variant="danger" wire:click="deleteNote({{ $note->id }})">Delete</flux:menu.item>
+                        <flux:menu.item icon="trash" icon:variant="micro" variant="danger" wire:click="deleteNote({{ $note->id }})">Delete</flux:menu.item>
                     </flux:menu>
                 </flux:dropdown>
             </div>
