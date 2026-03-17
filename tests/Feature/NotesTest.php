@@ -56,9 +56,9 @@ test('users can create a task in a note', function () {
     $note = Note::factory()->for($user)->create();
 
     Livewire::actingAs($user)
-        ->test('pages::notes.index')
+        ->test('note', ['note' => $note])
         ->set('newTaskContent', 'Buy groceries')
-        ->call('createTask', $note->id)
+        ->call('createTask')
         ->assertHasNoErrors();
 
     expect(Task::count())->toBe(1)
@@ -72,10 +72,22 @@ test('users can toggle task completion', function () {
     $task = Task::factory()->for($note)->create(['is_completed' => false]);
 
     Livewire::actingAs($user)
-        ->test('pages::notes.index')
+        ->test('note', ['note' => $note])
         ->call('toggleTask', $task->id);
 
     expect($task->fresh()->is_completed)->toBeTrue();
+});
+
+test('users can toggle task from completed to incomplete', function () {
+    $user = User::factory()->create();
+    $note = Note::factory()->for($user)->create();
+    $task = Task::factory()->for($note)->create(['is_completed' => true]);
+
+    Livewire::actingAs($user)
+        ->test('note', ['note' => $note])
+        ->call('toggleTask', $task->id);
+
+    expect($task->fresh()->is_completed)->toBeFalse();
 });
 
 test('users can delete a task', function () {
@@ -84,7 +96,7 @@ test('users can delete a task', function () {
     $task = Task::factory()->for($note)->create();
 
     Livewire::actingAs($user)
-        ->test('pages::notes.index')
+        ->test('note', ['note' => $note])
         ->call('deleteTask', $task->id);
 
     expect(Task::count())->toBe(0);
@@ -111,7 +123,7 @@ test('users cannot delete another users task', function () {
     $task = Task::factory()->for($note)->create();
 
     Livewire::actingAs($user)
-        ->test('pages::notes.index')
+        ->test('note', ['note' => $note])
         ->call('deleteTask', $task->id);
 
     expect(Task::count())->toBe(1)
@@ -125,7 +137,7 @@ test('users cannot toggle another users task', function () {
     $task = Task::factory()->for($note)->create(['is_completed' => false]);
 
     Livewire::actingAs($user)
-        ->test('pages::notes.index')
+        ->test('note', ['note' => $note])
         ->call('toggleTask', $task->id);
 
     expect($task->fresh()->is_completed)->toBeFalse();
@@ -137,9 +149,9 @@ test('users cannot add task to another users note', function () {
     $note = Note::factory()->for($otherUser)->create();
 
     Livewire::actingAs($user)
-        ->test('pages::notes.index')
+        ->test('note', ['note' => $note])
         ->set('newTaskContent', 'My task')
-        ->call('createTask', $note->id);
+        ->call('createTask');
 
     expect(Task::count())->toBe(0);
 });
@@ -174,9 +186,9 @@ test('task requires content', function () {
     $note = Note::factory()->for($user)->create();
 
     Livewire::actingAs($user)
-        ->test('pages::notes.index')
+        ->test('note', ['note' => $note])
         ->set('newTaskContent', '')
-        ->call('createTask', $note->id)
+        ->call('createTask')
         ->assertHasErrors(['newTaskContent' => 'required']);
 
     expect(Task::count())->toBe(0);
@@ -187,12 +199,29 @@ test('task content cannot exceed 255 characters', function () {
     $note = Note::factory()->for($user)->create();
 
     Livewire::actingAs($user)
-        ->test('pages::notes.index')
+        ->test('note', ['note' => $note])
         ->set('newTaskContent', str_repeat('a', 256))
-        ->call('createTask', $note->id)
+        ->call('createTask')
         ->assertHasErrors(['newTaskContent' => 'max']);
 
     expect(Task::count())->toBe(0);
+});
+
+test('note component displays multiple tasks', function () {
+    $user = User::factory()->create();
+    $note = Note::factory()->for($user)->create();
+
+    Task::factory()->for($note)->create(['content' => 'First task']);
+    Task::factory()->for($note)->create(['content' => 'Second task']);
+    Task::factory()->for($note)->create(['content' => 'Third task']);
+
+    Livewire::actingAs($user)
+        ->test('note', ['note' => $note])
+        ->assertSee('First task')
+        ->assertSee('Second task')
+        ->assertSee('Third task');
+
+    expect($note->tasks->count())->toBe(3);
 });
 
 test('first note on a date shows date, not time', function () {
