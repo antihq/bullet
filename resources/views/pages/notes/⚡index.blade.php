@@ -81,9 +81,9 @@ new class extends Component
     }
 }">
                     @if ($this->shouldShowTime($note))
-                        <span x-text="format('time')"></span>
+                        <span x-text="format('time')">{{ $note->created_at->format('g:i A') }}</span>
                     @else
-                        <span x-text="format('date')"></span>
+                        <span x-text="format('date')">{{ $note->created_at->isCurrentYear() ? $note->created_at->format('F j') : $note->created_at->format('F j, Y') }}</span>
                     @endif
                 </flux:heading>
                 <flux:dropdown>
