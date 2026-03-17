@@ -9,11 +9,7 @@ new class extends Component
 {
     public Collection $notes;
 
-    public int $activeNoteId = 0;
-
     public string $newTaskContent = '';
-
-    public string $newNoteTaskContent = '';
 
     public function mount(): void
     {
@@ -25,23 +21,11 @@ new class extends Component
         $this->notes = auth()->user()->notes()->with('tasks')->get();
     }
 
-    public function createNoteWithTask(): void
+    public function createNote(): void
     {
-        $this->validate([
-            'newNoteTaskContent' => 'required|string|max:255',
-        ]);
-
-        $note = Note::create([
+        Note::create([
             'user_id' => auth()->id(),
         ]);
-
-        Task::create([
-            'note_id' => $note->id,
-            'content' => $this->newNoteTaskContent,
-            'position' => 0,
-        ]);
-
-        $this->newNoteTaskContent = '';
         $this->loadNotes();
     }
 
@@ -98,25 +82,9 @@ new class extends Component
 ?>
 
 <div>
-    <flux:heading size="xl">Dashboard</flux:heading>
-
-    <div class="mt-8">
-        <flux:heading>New Note</flux:heading>
-        <flux:table>
-            <flux:table.rows>
-                <flux:table.row>
-                    <flux:table.cell>
-                        <form wire:submit="createNoteWithTask">
-                            <flux:composer wire:model="newNoteTaskContent" submit="enter" rows="1" inline label="Task" label:sr-only placeholder="Add a task to create a new note...">
-                                <x-slot name="actionsTrailing">
-                                    <flux:button type="submit" size="sm" variant="subtle" icon="plus" />
-                                </x-slot>
-                            </flux:composer>
-                        </form>
-                    </flux:table.cell>
-                </flux:table.row>
-            </flux:table.rows>
-        </flux:table>
+    <div class="flex items-center justify-between">
+        <flux:heading size="xl">Notes</flux:heading>
+        <flux:button wire:click="createNote" icon="plus">Add Note</flux:button>
     </div>
 
     @foreach ($notes as $note)

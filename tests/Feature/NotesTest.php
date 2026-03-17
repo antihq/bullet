@@ -18,19 +18,24 @@ test('authenticated users can visit the dashboard', function () {
     $response->assertOk();
 });
 
-test('users can create a note with a task', function () {
+test('dashboard url redirects to notes', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->get('/dashboard');
+
+    $response->assertRedirect('/notes');
+});
+
+test('users can create an empty note', function () {
     $user = User::factory()->create();
     Livewire::actingAs($user)
-        ->test('pages::dashboard')
-        ->set('newNoteTaskContent', 'Buy groceries')
-        ->call('createNoteWithTask')
+        ->test('pages::notes.index')
+        ->call('createNote')
         ->assertHasNoErrors();
 
     expect(Note::count())->toBe(1)
         ->and(Note::first()->user_id)->toBe($user->id)
-        ->and(Task::count())->toBe(1)
-        ->and(Task::first()->content)->toBe('Buy groceries')
-        ->and(Task::first()->note_id)->toBe(Note::first()->id);
+        ->and(Task::count())->toBe(0);
 });
 
 test('users can delete a note', function () {
@@ -38,7 +43,7 @@ test('users can delete a note', function () {
     $note = Note::factory()->for($user)->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard')
+        ->test('pages::notes.index')
         ->call('deleteNote', $note->id);
 
     expect(Note::count())->toBe(0);
@@ -49,8 +54,7 @@ test('users can create a task in a note', function () {
     $note = Note::factory()->for($user)->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard')
-        ->set('activeNoteId', $note->id)
+        ->test('pages::notes.index')
         ->set('newTaskContent', 'Buy groceries')
         ->call('createTask', $note->id)
         ->assertHasNoErrors();
@@ -66,7 +70,7 @@ test('users can toggle task completion', function () {
     $task = Task::factory()->for($note)->create(['is_completed' => false]);
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard')
+        ->test('pages::notes.index')
         ->call('toggleTask', $task->id);
 
     expect($task->fresh()->is_completed)->toBeTrue();
@@ -78,7 +82,7 @@ test('users can delete a task', function () {
     $task = Task::factory()->for($note)->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard')
+        ->test('pages::notes.index')
         ->call('deleteTask', $task->id);
 
     expect(Task::count())->toBe(0);
@@ -90,7 +94,7 @@ test('users cannot delete another users note', function () {
     $note = Note::factory()->for($otherUser)->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard')
+        ->test('pages::notes.index')
         ->call('deleteNote', $note->id);
 
     expect(Note::count())->toBe(1)
@@ -104,7 +108,7 @@ test('users cannot delete another users task', function () {
     $task = Task::factory()->for($note)->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard')
+        ->test('pages::notes.index')
         ->call('deleteTask', $task->id);
 
     expect(Task::count())->toBe(1)
@@ -118,7 +122,7 @@ test('users cannot toggle another users task', function () {
     $task = Task::factory()->for($note)->create(['is_completed' => false]);
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard')
+        ->test('pages::notes.index')
         ->call('toggleTask', $task->id);
 
     expect($task->fresh()->is_completed)->toBeFalse();
@@ -130,8 +134,7 @@ test('users cannot add task to another users note', function () {
     $note = Note::factory()->for($otherUser)->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard')
-        ->set('activeNoteId', $note->id)
+        ->test('pages::notes.index')
         ->set('newTaskContent', 'My task')
         ->call('createTask', $note->id);
 
@@ -142,35 +145,9 @@ test('dashboard shows empty state when no notes', function () {
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard')
+        ->test('pages::notes.index')
         ->assertOk()
         ->assertCount('notes', 0);
-});
-
-test('note with task requires content', function () {
-    $user = User::factory()->create();
-
-    Livewire::actingAs($user)
-        ->test('pages::dashboard')
-        ->set('newNoteTaskContent', '')
-        ->call('createNoteWithTask')
-        ->assertHasErrors(['newNoteTaskContent' => 'required']);
-
-    expect(Note::count())->toBe(0)
-        ->and(Task::count())->toBe(0);
-});
-
-test('note with task content cannot exceed 255 characters', function () {
-    $user = User::factory()->create();
-
-    Livewire::actingAs($user)
-        ->test('pages::dashboard')
-        ->set('newNoteTaskContent', str_repeat('a', 256))
-        ->call('createNoteWithTask')
-        ->assertHasErrors(['newNoteTaskContent' => 'max']);
-
-    expect(Note::count())->toBe(0)
-        ->and(Task::count())->toBe(0);
 });
 
 test('task requires content', function () {
@@ -178,8 +155,7 @@ test('task requires content', function () {
     $note = Note::factory()->for($user)->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard')
-        ->set('activeNoteId', $note->id)
+        ->test('pages::notes.index')
         ->set('newTaskContent', '')
         ->call('createTask', $note->id)
         ->assertHasErrors(['newTaskContent' => 'required']);
@@ -192,8 +168,7 @@ test('task content cannot exceed 255 characters', function () {
     $note = Note::factory()->for($user)->create();
 
     Livewire::actingAs($user)
-        ->test('pages::dashboard')
-        ->set('activeNoteId', $note->id)
+        ->test('pages::notes.index')
         ->set('newTaskContent', str_repeat('a', 256))
         ->call('createTask', $note->id)
         ->assertHasErrors(['newTaskContent' => 'max']);
