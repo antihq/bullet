@@ -40,6 +40,16 @@ new class extends Component
         $this->note->refresh();
     }
 
+    public function cancelTask(int $taskId): void
+    {
+        $task = Task::with('note')->findOrFail($taskId);
+        if ($task->note->user_id !== auth()->id()) {
+            abort(403);
+        }
+        $task->update(['is_cancelled' => ! $task->is_cancelled]);
+        $this->note->refresh();
+    }
+
     public function deleteTask(int $taskId): void
     {
         $task = Task::with('note')->findOrFail($taskId);
@@ -57,14 +67,15 @@ new class extends Component
         <flux:table.rows>
             @foreach ($note->tasks as $task)
                 <flux:table.row :key="$task->id">
-                    <flux:table.cell class="flex items-start gap-3" :variant="$task->is_completed ? 'default' : 'strong'">
-                        <flux:checkbox :checked="$task->is_completed" wire:change="toggleTask({{ $task->id }})" />
-                        <span class="{{ $task->is_completed ? 'line-through' : '' }} flex-1">{{ $task->content }}</span>
+                    <flux:table.cell class="flex items-start gap-3" :variant="$task->is_completed || $task->is_cancelled ? 'default' : 'strong'">
+                        <flux:checkbox :checked="$task->is_completed" :disabled="$task->is_cancelled" wire:change="toggleTask({{ $task->id }})" />
+                        <span class="{{ $task->is_completed || $task->is_cancelled ? 'line-through' : '' }} flex-1">{{ $task->content }}</span>
                     </flux:table.cell>
                     <flux:table.cell align="end">
                         <flux:dropdown>
                             <flux:button variant="subtle" icon="ellipsis-horizontal" icon:variant="micro" size="sm" inset="top bottom" />
                             <flux:menu>
+                                <flux:menu.item wire:click="cancelTask({{ $task->id }})">Cancel</flux:menu.item>
                                 <flux:menu.item icon="trash" variant="danger" wire:click="deleteTask({{ $task->id }})">Delete</flux:menu.item>
                             </flux:menu>
                         </flux:dropdown>

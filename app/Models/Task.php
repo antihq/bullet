@@ -17,12 +17,14 @@ class Task extends Model
         'content',
         'is_completed',
         'position',
+        'is_cancelled',
     ];
 
     protected function casts(): array
     {
         return [
             'is_completed' => 'boolean',
+            'is_cancelled' => 'boolean',
         ];
     }
 

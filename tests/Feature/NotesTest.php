@@ -143,6 +143,43 @@ test('users cannot toggle another users task', function () {
     expect($task->fresh()->is_completed)->toBeFalse();
 });
 
+test('users can cancel a task', function () {
+    $user = User::factory()->create();
+    $note = Note::factory()->for($user)->create();
+    $task = Task::factory()->for($note)->create(['is_cancelled' => false]);
+
+    Livewire::actingAs($user)
+        ->test('note', ['note' => $note])
+        ->call('cancelTask', $task->id);
+
+    expect($task->fresh()->is_cancelled)->toBeTrue();
+});
+
+test('users can un-cancel a task', function () {
+    $user = User::factory()->create();
+    $note = Note::factory()->for($user)->create();
+    $task = Task::factory()->for($note)->create(['is_cancelled' => true]);
+
+    Livewire::actingAs($user)
+        ->test('note', ['note' => $note])
+        ->call('cancelTask', $task->id);
+
+    expect($task->fresh()->is_cancelled)->toBeFalse();
+});
+
+test('users cannot cancel another users task', function () {
+    $user = User::factory()->create();
+    $otherUser = User::factory()->create();
+    $note = Note::factory()->for($otherUser)->create();
+    $task = Task::factory()->for($note)->create(['is_cancelled' => false]);
+
+    Livewire::actingAs($user)
+        ->test('note', ['note' => $note])
+        ->call('cancelTask', $task->id);
+
+    expect($task->fresh()->is_cancelled)->toBeFalse();
+});
+
 test('users cannot add task to another users note', function () {
     $user = User::factory()->create();
     $otherUser = User::factory()->create();
