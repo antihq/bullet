@@ -33,8 +33,8 @@ test('users can create an empty note', function () {
         ->call('createNote')
         ->assertHasNoErrors();
 
-    expect(Note::count())->toBe(1)
-        ->and(Note::first()->user_id)->toBe($user->id)
+    expect(Note::count())->toBe(2)
+        ->and(Note::where('user_id', $user->id)->count())->toBe(2)
         ->and(Task::count())->toBe(0);
 });
 
@@ -46,7 +46,9 @@ test('users can delete a note', function () {
         ->test('pages::notes.index')
         ->call('deleteNote', $note->id);
 
-    expect(Note::count())->toBe(0);
+    expect(Note::count())->toBe(1)
+        ->and(Note::where('id', $note->id)->count())->toBe(0)
+        ->and(Note::where('user_id', $user->id)->count())->toBe(1);
 });
 
 test('users can create a task in a note', function () {
@@ -97,8 +99,9 @@ test('users cannot delete another users note', function () {
         ->test('pages::notes.index')
         ->call('deleteNote', $note->id);
 
-    expect(Note::count())->toBe(1)
-        ->and(Note::first()->id)->toBe($note->id);
+    expect(Note::count())->toBe(2)
+        ->and(Note::where('id', $note->id)->count())->toBe(1)
+        ->and(Note::where('user_id', $user->id)->count())->toBe(1);
 });
 
 test('users cannot delete another users task', function () {
@@ -141,13 +144,29 @@ test('users cannot add task to another users note', function () {
     expect(Task::count())->toBe(0);
 });
 
-test('dashboard shows empty state when no notes', function () {
+test('users get an empty note when they have none', function () {
     $user = User::factory()->create();
 
     Livewire::actingAs($user)
         ->test('pages::notes.index')
         ->assertOk()
-        ->assertCount('notes', 0);
+        ->assertCount('notes', 1)
+        ->assertSet('notes', function ($notes) use ($user) {
+            return $notes->first()->user_id === $user->id;
+        });
+});
+
+test('users with existing notes do not get auto-created note', function () {
+    $user = User::factory()->create();
+    Note::factory()->for($user)->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::notes.index')
+        ->assertOk()
+        ->assertCount('notes', 1)
+        ->assertSet('notes', function ($notes) use ($user) {
+            return $notes->first()->user_id === $user->id;
+        });
 });
 
 test('task requires content', function () {

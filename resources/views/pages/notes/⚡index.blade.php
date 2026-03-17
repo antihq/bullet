@@ -22,6 +22,13 @@ new class extends Component
     {
         $this->notes = auth()->user()->notes()->with('tasks')->get();
 
+        if ($this->notes->isEmpty()) {
+            Note::create([
+                'user_id' => auth()->id(),
+            ]);
+            $this->notes = auth()->user()->notes()->with('tasks')->get();
+        }
+
         $this->notesByDate = $this->notes
             ->groupBy(fn ($note) => $note->created_at->format('Y-m-d'))
             ->map(fn ($notes) => $notes->first()->id)
