@@ -59,31 +59,36 @@ new class extends Component
 }
 ?>
 
-<div class="max-w-3xl mx-auto">
+<div class="max-w-3xl mx-auto" x-data="{
+        format(isoString, type) {
+            const date = new Date(isoString);
+            if (type === 'time') return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const noteDate = new Date(date);
+            noteDate.setHours(0,0,0,0);
+            const diffDays = (today - noteDate) / (1000 * 60 * 60 * 24);
+            if (diffDays === 0) return 'Today';
+            if (diffDays === 1) return 'Yesterday';
+            const options = date.getFullYear() === today.getFullYear()
+                ? { month: 'long', day: 'numeric' }
+                : { month: 'long', day: 'numeric', year: 'numeric' };
+            return date.toLocaleDateString([], options);
+        }
+    }">
     <div class="flex items-center justify-between">
         <flux:heading size="xl">Notes</flux:heading>
         <flux:button wire:click="createNote" icon="plus">Add Note</flux:button>
     </div>
 
     @foreach ($notes as $note)
-        <div class="mt-6">
+        <div class="mt-6" wire:key="note-{{ $note->id }}">
             <div class="flex items-center justify-between">
-                <flux:heading x-data="{ 
-                        date: new Date('{{ $note->created_at->toIso8601String() }}'),
-                        format(type) {
-                            if (type === 'time') {
-                                return this.date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-                            }
-                            const options = this.date.getFullYear() === new Date().getFullYear()
-                                ? { month: 'long', day: 'numeric' }
-                                : { month: 'long', day: 'numeric', year: 'numeric' };
-                            return this.date.toLocaleDateString([], options);
-                        }
-                    }">
+                <flux:heading>
                     @if ($this->shouldShowTime($note))
-                        <span x-text="format('time')">{{ $note->created_at->format('g:i A') }}</span>
+                        <span x-text="format('{{ $note->created_at->toIso8601String() }}', 'time')">{{ $note->created_at->format('g:i A') }}</span>
                     @else
-                        <span x-text="format('date')">{{ $note->created_at->isCurrentYear() ? $note->created_at->format('F j') : $note->created_at->format('F j, Y') }}</span>
+                        <span x-text="format('{{ $note->created_at->toIso8601String() }}', 'date')">{{ $note->created_at->isToday() ? 'Today' : ($note->created_at->isYesterday() ? 'Yesterday' : ($note->created_at->isCurrentYear() ? $note->created_at->format('F j') : $note->created_at->format('F j, Y'))) }}</span>
                     @endif
                 </flux:heading>
                 <flux:dropdown>
