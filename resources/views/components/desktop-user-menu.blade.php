@@ -1,7 +1,7 @@
 <flux:dropdown position="bottom" align="start">
     <flux:sidebar.profile
+        :avatar="'https://avatars.laravel.cloud/' . auth()->user()->email"
         :name="auth()->user()->email"
-        :initials="auth()->user()->initials()"
         icon:trailing="chevrons-up-down"
         data-test="sidebar-menu-button"
     />
@@ -9,8 +9,7 @@
     <flux:menu>
         <div class="flex items-center gap-2 px-1 py-1.5 text-start text-sm">
             <flux:avatar
-                :name="auth()->user()->email"
-                :initials="auth()->user()->initials()"
+                src="https://avatars.laravel.cloud/{{ auth()->user()->email }}"
             />
             <div class="grid flex-1 text-start text-sm leading-tight">
                 <flux:heading class="truncate">{{ auth()->user()->email }}</flux:heading>
@@ -21,6 +20,10 @@
             <flux:menu.item :href="route('profile.edit')" icon="cog" icon:variant="micro" wire:navigate>
                 {{ __('Settings') }}
             </flux:menu.item>
+            <flux:menu.item :href="route('home')" icon="home" icon:variant="micro" wire:navigate>
+                {{ __('Home') }}
+            </flux:menu.item>
+            <flux:menu.separator />
             <form method="POST" action="{{ route('logout') }}" class="w-full">
                 @csrf
                 <flux:menu.item
