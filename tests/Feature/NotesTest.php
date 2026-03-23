@@ -263,7 +263,7 @@ test('note component displays multiple tasks', function () {
 
 test('first note on a date shows date, not time', function () {
     $user = User::factory()->create();
-    $note = Note::factory()->for($user)->create(['created_at' => now()]);
+    $note = Note::factory()->for($user)->create(['created_at' => now()->subDays(3)]);
 
     Livewire::actingAs($user)
         ->test('pages::notes.index')
@@ -273,7 +273,7 @@ test('first note on a date shows date, not time', function () {
 
 test('subsequent notes on same date show time', function () {
     $user = User::factory()->create();
-    $date = now()->startOfDay();
+    $date = now()->subDays(3)->startOfDay();
 
     Note::factory()->for($user)->create(['created_at' => $date->copy()->addHours(10)]);
     Note::factory()->for($user)->create(['created_at' => $date->copy()->addHours(18)]);
@@ -290,8 +290,8 @@ test('subsequent notes on same date show time', function () {
 test('notes on different dates each show date', function () {
     $user = User::factory()->create();
 
-    $note1 = Note::factory()->for($user)->create(['created_at' => now()->subDay()]);
-    $note2 = Note::factory()->for($user)->create(['created_at' => now()]);
+    $note1 = Note::factory()->for($user)->create(['created_at' => now()->subDays(4)]);
+    $note2 = Note::factory()->for($user)->create(['created_at' => now()->subDays(3)]);
 
     Livewire::actingAs($user)
         ->test('pages::notes.index')
