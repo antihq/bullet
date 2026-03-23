@@ -1,8 +1,10 @@
 <?php
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
-Route::redirect('/', 'dashboard')->name('home');
+Route::get('/', fn () => redirect(Auth::check() ? 'dashboard' : 'home'));
+Route::livewire('/home', 'pages::home')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::redirect('dashboard', 'notes')->name('dashboard');
