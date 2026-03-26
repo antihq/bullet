@@ -35,6 +35,8 @@
             <flux:dropdown position="top" align="end">
                 <flux:profile
                     :avatar="'https://avatars.laravel.cloud/' . auth()->user()->email"
+                    :chevron="false"
+                    avatar:size="xs"
                 />
 
                 <flux:menu>
