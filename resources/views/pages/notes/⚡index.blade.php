@@ -78,7 +78,10 @@ new class extends Component
     }">
     <div class="flex items-center justify-between">
         <flux:heading size="xl">Notes</flux:heading>
-        <flux:button wire:click="createNote" icon="plus">Add Note</flux:button>
+        <div class="flex items-center gap-2">
+            <flux:button wire:click="$refresh" icon="arrow-path" variant="subtle" />
+            <flux:button wire:click="createNote" icon="plus">Add Note</flux:button>
+        </div>
     </div>
 
     @foreach ($notes as $note)
