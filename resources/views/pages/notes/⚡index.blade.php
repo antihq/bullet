@@ -10,6 +10,8 @@ new class extends Component
 
     public array $notesByDate = [];
 
+    public string $refreshKey = '';
+
     public function mount(): void
     {
         $this->loadNotes();
@@ -30,6 +32,8 @@ new class extends Component
             ->groupBy(fn ($note) => $note->created_at->format('Y-m-d'))
             ->map(fn ($notes) => $notes->first()->id)
             ->toArray();
+
+        $this->refreshKey = Str::random();
     }
 
     public function shouldShowTime(Note $note): bool
@@ -79,7 +83,7 @@ new class extends Component
     <div class="flex items-center justify-between">
         <flux:heading size="xl">Notes</flux:heading>
         <div class="flex items-center gap-2">
-            <flux:button wire:click="$refresh" icon="arrow-path" variant="subtle" />
+            <flux:button wire:click="loadNotes" icon="arrow-path" variant="subtle" />
             <flux:button wire:click="createNote" icon="plus">Add Note</flux:button>
         </div>
     </div>
@@ -102,7 +106,7 @@ new class extends Component
                 </flux:dropdown>
             </div>
 
-            <livewire:note :note="$note" :key="$note->id" class="mt-2" />
+            <livewire:note :note="$note" :key="$note->id . '-' . $refreshKey" class="mt-2" />
         </div>
     @endforeach
 </div>

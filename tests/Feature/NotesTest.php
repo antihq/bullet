@@ -328,3 +328,44 @@ test('multiple notes from previous year show time for subsequent', function () {
     expect($html)->toContain((string) $lastYear)
         ->and($html)->toMatch('/AM|PM/');
 });
+
+test('loadNotes updates refreshKey and refreshes notes', function () {
+    $user = User::factory()->create();
+
+    $component = Livewire::actingAs($user)
+        ->test('pages::notes.index');
+
+    $oldKey = $component->get('refreshKey');
+
+    $component->call('loadNotes');
+
+    expect($component->get('refreshKey'))->not->toBe($oldKey)
+        ->and($component->get('notes')->count())->toBe(1);
+});
+
+test('refreshing loads new notes created outside the component', function () {
+    $user = User::factory()->create();
+
+    $component = Livewire::actingAs($user)
+        ->test('pages::notes.index')
+        ->assertCount('notes', 1);
+
+    Note::factory()->for($user)->create(['created_at' => now()->subDays(1)]);
+
+    $component->call('loadNotes')
+        ->assertCount('notes', 2);
+});
+
+test('refreshing loads new tasks created outside the component', function () {
+    $user = User::factory()->create();
+    $note = Note::factory()->for($user)->create();
+
+    $component = Livewire::actingAs($user)
+        ->test('pages::notes.index')
+        ->assertDontSee('Buy groceries');
+
+    Task::factory()->for($note)->create(['content' => 'Buy groceries']);
+
+    $component->call('loadNotes')
+        ->assertSee('Buy groceries');
+});
