@@ -369,3 +369,159 @@ test('refreshing loads new tasks created outside the component', function () {
     $component->call('loadNotes')
         ->assertSee('Buy groceries');
 });
+
+test('notes are paginated with seven dates per page', function () {
+    $user = User::factory()->create();
+
+    foreach (range(0, 7) as $i) {
+        Note::factory()->for($user)->create(['created_at' => now()->subDays($i)]);
+    }
+
+    Livewire::actingAs($user)
+        ->test('pages::notes.index')
+        ->assertSet('hasMorePages', true)
+        ->assertCount('notes', 7);
+});
+
+test('next page shows older notes', function () {
+    $user = User::factory()->create();
+
+    foreach (range(0, 8) as $i) {
+        Note::factory()->for($user)->create(['created_at' => now()->subDays($i)]);
+    }
+
+    Livewire::actingAs($user)
+        ->test('pages::notes.index')
+        ->call('nextPage')
+        ->assertSet('page', 2)
+        ->assertSet('hasMorePages', false)
+        ->assertCount('notes', 2);
+});
+
+test('previous page shows newer notes', function () {
+    $user = User::factory()->create();
+
+    foreach (range(0, 8) as $i) {
+        Note::factory()->for($user)->create(['created_at' => now()->subDays($i)]);
+    }
+
+    Livewire::actingAs($user)
+        ->test('pages::notes.index', ['page' => 2])
+        ->call('previousPage')
+        ->assertSet('page', 1)
+        ->assertCount('notes', 7);
+});
+
+test('next page is a no-op on last page', function () {
+    $user = User::factory()->create();
+    Note::factory()->for($user)->create(['created_at' => now()->subDays(1)]);
+    Note::factory()->for($user)->create(['created_at' => now()->subDays(2)]);
+
+    Livewire::actingAs($user)
+        ->test('pages::notes.index')
+        ->call('nextPage')
+        ->assertSet('page', 1);
+});
+
+test('previous page is a no-op on first page', function () {
+    $user = User::factory()->create();
+    Note::factory()->for($user)->create(['created_at' => now()->subDays(1)]);
+    Note::factory()->for($user)->create(['created_at' => now()->subDays(2)]);
+
+    Livewire::actingAs($user)
+        ->test('pages::notes.index')
+        ->call('previousPage')
+        ->assertSet('page', 1);
+});
+
+test('page is clamped when exceeding total pages', function () {
+    $user = User::factory()->create();
+
+    foreach (range(0, 8) as $i) {
+        Note::factory()->for($user)->create(['created_at' => now()->subDays($i)]);
+    }
+
+    Livewire::actingAs($user)
+        ->test('pages::notes.index', ['page' => 99])
+        ->assertSet('page', 2)
+        ->assertCount('notes', 2);
+});
+
+test('deleting last note on page navigates to previous page', function () {
+    $user = User::factory()->create();
+
+    foreach (range(0, 7) as $i) {
+        Note::factory()->for($user)->create(['created_at' => now()->subDays($i)]);
+    }
+
+    $oldestNote = Note::where('user_id', $user->id)
+        ->orderBy('created_at', 'asc')
+        ->first();
+
+    Livewire::actingAs($user)
+        ->test('pages::notes.index', ['page' => 2])
+        ->assertSet('page', 2)
+        ->call('deleteNote', $oldestNote->id)
+        ->assertSet('page', 1);
+});
+
+test('creating a note resets to page one', function () {
+    $user = User::factory()->create();
+
+    foreach (range(0, 7) as $i) {
+        Note::factory()->for($user)->create(['created_at' => now()->subDays($i)]);
+    }
+
+    Livewire::actingAs($user)
+        ->test('pages::notes.index', ['page' => 2])
+        ->call('createNote')
+        ->assertSet('page', 1);
+});
+
+test('add note button only shows on page one', function () {
+    $user = User::factory()->create();
+
+    foreach (range(0, 7) as $i) {
+        Note::factory()->for($user)->create(['created_at' => now()->subDays($i)]);
+    }
+
+    Livewire::actingAs($user)
+        ->test('pages::notes.index', ['page' => 2])
+        ->assertDontSee('Add Note');
+});
+
+test('pagination controls show when multiple pages exist', function () {
+    $user = User::factory()->create();
+
+    foreach (range(0, 7) as $i) {
+        Note::factory()->for($user)->create(['created_at' => now()->subDays($i)]);
+    }
+
+    Livewire::actingAs($user)
+        ->test('pages::notes.index')
+        ->assertSee('Previous')
+        ->assertSee('Next');
+});
+
+test('pagination controls hidden when only one page', function () {
+    $user = User::factory()->create();
+    Note::factory()->for($user)->create();
+
+    Livewire::actingAs($user)
+        ->test('pages::notes.index')
+        ->assertDontSee('Previous')
+        ->assertDontSee('Next');
+});
+
+test('page query parameter is respected', function () {
+    $user = User::factory()->create();
+
+    foreach (range(0, 8) as $i) {
+        Note::factory()->for($user)->create(['created_at' => now()->subDays($i)]);
+    }
+
+    Livewire::actingAs($user)
+        ->test('pages::notes.index', ['page' => 2])
+        ->assertSet('page', 2)
+        ->assertCount('notes', 2);
+});

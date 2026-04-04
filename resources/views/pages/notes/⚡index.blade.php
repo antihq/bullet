@@ -2,13 +2,19 @@
 
 use App\Models\Note;
 use Illuminate\Support\Collection;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 new class extends Component
 {
+    #[Url]
+    public int $page = 1;
+
     public Collection $notes;
 
     public array $notesByDate = [];
+
+    public bool $hasMorePages = false;
 
     public string $refreshKey = '';
 
@@ -19,14 +25,39 @@ new class extends Component
 
     public function loadNotes(): void
     {
-        $this->notes = auth()->user()->notes()->with('tasks')->get();
+        $user = auth()->user();
 
-        if ($this->notes->isEmpty()) {
-            Note::create([
-                'user_id' => auth()->id(),
-            ]);
-            $this->notes = auth()->user()->notes()->with('tasks')->get();
+        $distinctDates = $user->notes()
+            ->selectRaw('DISTINCT DATE(created_at) as date')
+            ->reorder()
+            ->orderByDesc('date')
+            ->pluck('date');
+
+        if ($distinctDates->isEmpty()) {
+            Note::create(['user_id' => $user->id]);
+            $distinctDates = $user->notes()
+                ->selectRaw('DISTINCT DATE(created_at) as date')
+                ->reorder()
+                ->orderByDesc('date')
+                ->pluck('date');
         }
+
+        $maxPage = max(1, (int) ceil($distinctDates->count() / 7));
+        $this->page = max(1, min($this->page, $maxPage));
+
+        $pageDates = $distinctDates->slice(($this->page - 1) * 7, 7)->values();
+
+        $this->notes = $user->notes()
+            ->with('tasks')
+            ->where(function ($query) use ($pageDates) {
+                foreach ($pageDates as $date) {
+                    $query->orWhereDate('created_at', $date);
+                }
+            })
+            ->orderByDesc('created_at')
+            ->get();
+
+        $this->hasMorePages = $distinctDates->count() > $this->page * 7;
 
         $this->notesByDate = $this->notes
             ->groupBy(fn ($note) => $note->created_at->format('Y-m-d'))
@@ -34,6 +65,22 @@ new class extends Component
             ->toArray();
 
         $this->refreshKey = Str::random();
+    }
+
+    public function nextPage(): void
+    {
+        if ($this->hasMorePages) {
+            $this->page++;
+            $this->loadNotes();
+        }
+    }
+
+    public function previousPage(): void
+    {
+        if ($this->page > 1) {
+            $this->page--;
+            $this->loadNotes();
+        }
     }
 
     public function shouldShowTime(Note $note): bool
@@ -48,6 +95,7 @@ new class extends Component
         Note::create([
             'user_id' => auth()->id(),
         ]);
+        $this->page = 1;
         $this->loadNotes();
     }
 
@@ -58,6 +106,11 @@ new class extends Component
             abort(403);
         }
         $note->delete();
+
+        if ($this->notes->count() <= 1 && $this->page > 1) {
+            $this->page--;
+        }
+
         $this->loadNotes();
     }
 }
@@ -84,7 +137,9 @@ new class extends Component
         <flux:heading size="xl">Notes</flux:heading>
         <div class="flex items-center gap-2">
             <flux:button wire:click="loadNotes" icon="arrow-path" variant="subtle" />
-            <flux:button wire:click="createNote" icon="plus">Add Note</flux:button>
+            @if ($page === 1)
+                <flux:button wire:click="createNote" icon="plus">Add Note</flux:button>
+            @endif
         </div>
     </div>
 
@@ -109,4 +164,28 @@ new class extends Component
             <livewire:note :note="$note" :key="$note->id . '-' . $refreshKey" class="mt-2" />
         </div>
     @endforeach
+
+    @if ($page > 1 || $hasMorePages)
+        <flux:separator class="mt-8" variant="subtle" />
+
+        <div class="flex items-center justify-between mt-4">
+            <flux:button
+                wire:click="previousPage"
+                icon="arrow-left"
+                variant="subtle"
+                :disabled="$page <= 1"
+            >
+                Previous
+            </flux:button>
+
+            <flux:button
+                wire:click="nextPage"
+                icon-trailing="arrow-right"
+                variant="subtle"
+                :disabled="!$hasMorePages"
+            >
+                Next
+            </flux:button>
+        </div>
+    @endif
 </div>
