@@ -1,27 +1,10 @@
 <flux:dropdown position="bottom" align="start">
-    <flux:sidebar.profile
-        :avatar="'https://avatars.laravel.cloud/' . auth()->user()->email"
-        :name="auth()->user()->email"
-        icon:trailing="chevrons-up-down"
-        data-test="sidebar-menu-button"
-    />
+    <flux:button icon="bars-2" variant="subtle" inset="right" />
 
     <flux:menu>
-        <div class="flex items-center gap-2 px-1 py-1.5 text-start text-sm">
-            <flux:avatar
-                src="https://avatars.laravel.cloud/{{ auth()->user()->email }}"
-            />
-            <div class="grid flex-1 text-start text-sm leading-tight">
-                <flux:heading class="truncate">{{ auth()->user()->email }}</flux:heading>
-            </div>
-        </div>
-        <flux:menu.separator />
         <flux:menu.radio.group>
-            <flux:menu.item :href="route('profile.edit')" icon="cog" icon:variant="micro" wire:navigate>
+            <flux:menu.item :href="route('profile.edit')" wire:navigate>
                 {{ __('Settings') }}
-            </flux:menu.item>
-            <flux:menu.item :href="route('home')" icon="home" icon:variant="micro" wire:navigate>
-                {{ __('Home') }}
             </flux:menu.item>
             <flux:menu.separator />
             <form method="POST" action="{{ route('logout') }}" class="w-full">
@@ -29,7 +12,6 @@
                 <flux:menu.item
                     as="button"
                     type="submit"
-                    icon="arrow-right-start-on-rectangle"
                     class="w-full cursor-pointer"
                     data-test="logout-button"
                 >

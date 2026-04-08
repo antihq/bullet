@@ -74,7 +74,7 @@ new class extends Component
                         </flux:field>
                     </flux:table.cell>
                     <flux:table.cell align="end">
-                        <flux:dropdown>
+                        <flux:dropdown align="end">
                             <flux:button variant="subtle" icon="ellipsis-horizontal" icon:variant="micro" size="sm" inset="top bottom" />
                             <flux:menu>
                                 <flux:menu.item :icon="$task->is_cancelled ? 'arrow-path' : 'x-circle'" icon:variant="micro" wire:click="cancelTask({{ $task->id }})">{{ $task->is_cancelled ? 'Restore' : 'Cancel' }}</flux:menu.item>

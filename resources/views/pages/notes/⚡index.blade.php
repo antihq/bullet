@@ -16,8 +16,6 @@ new class extends Component
 
     public bool $hasMorePages = false;
 
-    public string $refreshKey = '';
-
     public function mount(): void
     {
         $this->loadNotes();
@@ -63,8 +61,6 @@ new class extends Component
             ->groupBy(fn ($note) => $note->created_at->format('Y-m-d'))
             ->map(fn ($notes) => $notes->first()->id)
             ->toArray();
-
-        $this->refreshKey = Str::random();
     }
 
     public function nextPage(): void
@@ -116,7 +112,7 @@ new class extends Component
 }
 ?>
 
-<div class="max-w-3xl mx-auto" x-data="{
+<div class="max-w-xl mx-auto" x-data="{
         format(isoString, type) {
             const date = new Date(isoString);
             if (type === 'time') return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
@@ -133,15 +129,10 @@ new class extends Component
             return date.toLocaleDateString([], options);
         }
     }">
-    <div class="flex items-center justify-between">
-        <flux:heading size="xl">Notes</flux:heading>
-        <div class="flex items-center gap-2">
-            <flux:button wire:click="loadNotes" icon="arrow-path" variant="subtle" />
-            @if ($page === 1)
-                <flux:button wire:click="createNote" icon="plus">Add Note</flux:button>
-            @endif
-        </div>
-    </div>
+
+    @if ($page === 1)
+        <flux:button wire:click="createNote" icon="plus" class="w-full">Add Note</flux:button>
+    @endif
 
     @foreach ($notes as $note)
         <div class="mt-6" wire:key="note-{{ $note->id }}">
@@ -153,7 +144,7 @@ new class extends Component
                         <span x-text="format('{{ $note->created_at->toIso8601String() }}', 'date')">{{ $note->created_at->isToday() ? 'Today' : ($note->created_at->isYesterday() ? 'Yesterday' : ($note->created_at->isCurrentYear() ? $note->created_at->format('F j') : $note->created_at->format('F j, Y'))) }}</span>
                     @endif
                 </flux:heading>
-                <flux:dropdown>
+                <flux:dropdown align="end">
                     <flux:button variant="subtle" icon="ellipsis-horizontal" icon:variant="micro" size="sm" />
                     <flux:menu>
                         <flux:menu.item icon="trash" icon:variant="micro" variant="danger" wire:click="deleteNote({{ $note->id }})">Delete</flux:menu.item>
@@ -161,7 +152,7 @@ new class extends Component
                 </flux:dropdown>
             </div>
 
-            <livewire:note :note="$note" :key="$note->id . '-' . $refreshKey" class="mt-2" />
+            <livewire:note :note="$note" :key="$note->id" class="mt-2" />
         </div>
     @endforeach
 
