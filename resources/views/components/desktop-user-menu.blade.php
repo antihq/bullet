@@ -1,5 +1,5 @@
 <flux:dropdown position="bottom" align="start">
-    <flux:button icon="menu-2" variant="subtle" inset="right" />
+    <flux:button icon="menu-2" variant="subtle" />
 
     <flux:menu>
         <flux:menu.radio.group>

@@ -10,8 +10,8 @@
             <flux:spacer />
 
             <flux:navbar class="-mb-px">
-                <flux:navbar.item :href="route('notes.index')" wire:navigate>
-                    {{ __('Notes') }}
+                <flux:navbar.item :href="route('notes.index')" icon="note" wire:navigate>
+                    Notes
                 </flux:navbar.item>
             </flux:navbar>
 
